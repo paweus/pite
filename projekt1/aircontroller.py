@@ -16,6 +16,7 @@ class AirPlane(QtGui.QWidget):
 #####################################################
     def __init__(self):
         print "Welcome to airlines"
+        self.takeoffSpeed = 40 #m/s
         self.started = False
         self.boost = 0
         self.speed = 0
@@ -130,13 +131,14 @@ class AirPlane(QtGui.QWidget):
         self.GUIacceleration_value.move(120, 190)
         self.GUIacceleration_value.setText('---')
 
-        btn1 = QtGui.QPushButton("Startuj lot", self)
-        btn1.clicked.connect(self.initiateFlight)
-        btn1.move(240, 50)
+        self.btn1 = QtGui.QPushButton("Startuj lot", self)
+        self.btn1.clicked.connect(self.initiateFlight)
+        self.btn1.move(240, 50)
 
-        cancel_button = QtGui.QPushButton("Wylacz system",self)
-        cancel_button.clicked.connect(self.cancel)
-        cancel_button.move(240,90)
+        self.cancel_button = QtGui.QPushButton("Wylacz system",self)
+        self.cancel_button.clicked.connect(self.cancelTracking)
+        self.cancel_button.move(240,90)
+        self.cancel_button.setEnabled(False)
 
         self.setGeometry(300, 300, 500, 300)
         self.setWindowTitle('Samolot')
@@ -175,10 +177,9 @@ class AirPlane(QtGui.QWidget):
 ## Funkcja odswiezajace informacje o samolocie
 #####################################################
     def update(self,stop_event):
-        try:
             while True and not stop_event.isSet():
-                self.upSpeed()
-                self.upDistance()
+                self.updateSpeed()
+                self.updateDistance()
                 self.printLogs()
                 self.saveCSV()
                 self.guiUpdate()
@@ -187,9 +188,6 @@ class AirPlane(QtGui.QWidget):
                 if self.takeoff == True:
                     self.FlihtMode()
                 time.sleep(1)
-        except KeyboardInterrupt:
-            print "Ewakuacja, lot odwolany"
-
     def saveCSV(self):
         writer = csv.writer(self.target)
         writer.writerow((round(self.speed,2), self.height, round(self.getTime(),3),self.angle,self.acceleration,round(self.distance,3),round(self.distanceRunway,3)))
@@ -206,14 +204,16 @@ class AirPlane(QtGui.QWidget):
 #####################################################
 
     def initiateFlight(self):
+        self.btn1.setEnabled(False)
+        self.cancel_button.setEnabled(True)
         self.target = open('log.csv', 'wt')
         self.planeStart()
         #Threading
         self.stop_event = threading.Event()
-        self.c_thread = threading.Thread(target=self.update, args=(self.stop_event,))
+        self.c_thread = threading.Thread(target = self.update, args=(self.stop_event,))
         self.c_thread.start()
 
-    def cancel(self):
+    def cancelTracking(self):
         #Threading
         self.stop_event.set()
         self.planeStop()
@@ -230,17 +230,17 @@ class AirPlane(QtGui.QWidget):
         self.timeStop = time.time()
 
     def ifTakeOFF(self):
-        if self.speed > 80:
+        if self.speed > self.takeoffSpeed:
             if self.takeoff == False:
                 print "Samolot wystartowal"
+                self.timeTakeOFF = time.time()
             self.takeoff = True
-            self.timeTakeOFF = time.time()
 
-    def upSpeed(self):
+    def updateSpeed(self):
         if self.speed*3.6 < 900:
             self.speed = self.speed_p + self.acceleration*self.getTime()
 
-    def upDistance(self):
+    def updateDistance(self):
         if self.takeoff == False:
             self.distanceRunway = (self.acceleration*self.getTime()*self.getTime())/2
         else:
@@ -249,7 +249,10 @@ class AirPlane(QtGui.QWidget):
     def FlihtMode(self):
         if (self.height < 2000) & (self.angle < 40):
             self.angle += 0.1
-        self.height += self.speed*math.sin(math.radians(self.angle))
+            self.height += self.speed*math.sin(math.radians(self.angle))
+        if (self.height > 2000) & (self.angle > 0):
+            self.angle += 0.3
+            self.height += self.speed*math.sin(math.radians(self.angle))
 
     def getTime(self):
         return time.time() - self.timeStart + self.boost
