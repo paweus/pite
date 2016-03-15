@@ -11,6 +11,7 @@ import csv
 
 class AirPlane(QtGui.QWidget):
 
+    display_update = QtCore.pyqtSignal() # ADDED
 #####################################################
 ## Inicjalizacja zmiennych
 #####################################################
@@ -131,9 +132,9 @@ class AirPlane(QtGui.QWidget):
         self.GUIacceleration_value.move(120, 190)
         self.GUIacceleration_value.setText('---')
 
-        self.btn1 = QtGui.QPushButton("Startuj lot", self)
-        self.btn1.clicked.connect(self.initiateFlight)
-        self.btn1.move(240, 50)
+        self.start_button = QtGui.QPushButton("Startuj lot", self)
+        self.start_button.clicked.connect(self.initiateFlight)
+        self.start_button.move(240, 50)
 
         self.cancel_button = QtGui.QPushButton("Wylacz system",self)
         self.cancel_button.clicked.connect(self.cancelTracking)
@@ -142,35 +143,35 @@ class AirPlane(QtGui.QWidget):
 
         self.setGeometry(300, 300, 500, 300)
         self.setWindowTitle('Samolot')
+        self.display_update.connect(self.guiUpdate) # ADDED
         self.show()
 
 #####################################################
 ## Funkcja odswiezajaca gui
 #####################################################
     def guiUpdate(self):
-        if self.started == True:
-            self.GUIflightTime_value.setText(str(int(self.getTime())) + ' s')
-            self.GUIflightTime_value.adjustSize()
-            self.GUIspeed_value.setText(str(round(self.speed,1)) + ' m/s')
-            self.GUIspeed_value.adjustSize()
-            self.GUIspeedkm_value.setText(str(round(self.speed*3.6,1)) + ' km/h')
-            self.GUIspeedkm_value.adjustSize()
-            self.GUIdistance_value.setText(str(round(self.distance,1)) + ' m')
-            self.GUIdistance_value.adjustSize()
-            self.GUIrunway_value.setText(str(round(self.distanceRunway,1)) + ' m')
-            self.GUIrunway_value.adjustSize()
-            self.GUIflightData_value.setText(str(self.dateNow.strftime("%Y-%m-%d %H:%M")))
-            self.GUIflightData_value.adjustSize()
-            self.GUIangle_value.setText(str(self.angle) + ' deg')
-            self.GUIangle_value.adjustSize()
-            self.GUIheight_value.setText(str(round(self.height,1)) + ' m')
-            self.GUIheight_value.adjustSize()
-            self.GUIacceleration_value.setText(str(self.acceleration) + ' m/s^2')
-            self.GUIacceleration_value.adjustSize()
-            if self.takeoff == False:
-                self.GUIstatus_value.setText('Na pasie')
-            if self.takeoff == True:
-                self.GUIstatus_value.setText('W powietrzu')
+        self.GUIflightTime_value.setText(str(int(self.getTime())) + ' s')
+        self.GUIflightTime_value.adjustSize()
+        self.GUIspeed_value.setText(str(round(self.speed,1)) + ' m/s')
+        self.GUIspeed_value.adjustSize()
+        self.GUIspeedkm_value.setText(str(round(self.speed*3.6,1)) + ' km/h')
+        self.GUIspeedkm_value.adjustSize()
+        self.GUIdistance_value.setText(str(round(self.distance,1)) + ' m')
+        self.GUIdistance_value.adjustSize()
+        self.GUIrunway_value.setText(str(round(self.distanceRunway,1)) + ' m')
+        self.GUIrunway_value.adjustSize()
+        self.GUIflightData_value.setText(str(self.dateNow.strftime("%Y-%m-%d %H:%M")))
+        self.GUIflightData_value.adjustSize()
+        self.GUIangle_value.setText(str(self.angle) + ' deg')
+        self.GUIangle_value.adjustSize()
+        self.GUIheight_value.setText(str(round(self.height,1)) + ' m')
+        self.GUIheight_value.adjustSize()
+        self.GUIacceleration_value.setText(str(self.acceleration) + ' m/s^2')
+        self.GUIacceleration_value.adjustSize()
+        if self.takeoff == False:
+            self.GUIstatus_value.setText('Na pasie')
+        if self.takeoff == True:
+            self.GUIstatus_value.setText('W powietrzu')
 
 
 #####################################################
@@ -182,16 +183,21 @@ class AirPlane(QtGui.QWidget):
                 self.updateDistance()
                 self.printLogs()
                 self.saveCSV()
-                self.guiUpdate()
+                self.display_update.emit() # ADDED
                 if self.takeoff == False:
                     self.ifTakeOFF()
                 if self.takeoff == True:
-                    self.FlihtMode()
+                    self.FlightMode()
                 time.sleep(1)
+
+#####################################################
+## Funkcja zapisujaca dane do pliku .CSV
+#####################################################
     def saveCSV(self):
         writer = csv.writer(self.target)
-        writer.writerow((round(self.speed,2), self.height, round(self.getTime(),3),self.angle,self.acceleration,round(self.distance,3),round(self.distanceRunway,3)))
+        writer.writerow((round(self.getTime(),3),round(self.speed,2), round(self.height,3),round(self.angle,2),round(self.acceleration,3),round(self.distance,3),round(self.distanceRunway,3)))
 
+# Funkcja wpisujaca naglowek do pliku z data lotu
     def initlialWrite(self):
         self.target.write("###")
         self.target.write("Date:")
@@ -200,11 +206,11 @@ class AirPlane(QtGui.QWidget):
 
 
 #####################################################
-## Funkcja odswiezajace informacje o samolocie
+## Funkcja inicjalizacja poczatek lotu
 #####################################################
 
     def initiateFlight(self):
-        self.btn1.setEnabled(False)
+        self.start_button.setEnabled(False)
         self.cancel_button.setEnabled(True)
         self.target = open('log.csv', 'wt')
         self.planeStart()
@@ -213,6 +219,7 @@ class AirPlane(QtGui.QWidget):
         self.c_thread = threading.Thread(target = self.update, args=(self.stop_event,))
         self.c_thread.start()
 
+## Funkcja konczaca sledzenie
     def cancelTracking(self):
         #Threading
         self.stop_event.set()
@@ -220,15 +227,20 @@ class AirPlane(QtGui.QWidget):
         self.target.close()
         self.close()
 
+# Funkcja inicjalizujaca parametry startowe takie jak czas startu, data
     def planeStart(self):
         self.timeStart = time.time()
         self.started = True
         self.dateNow = datetime.datetime.now()
         self.initlialWrite()
 
+# Dlugosc lotu samolotu
     def planeStop(self):
+        self.dateEnd = datetime.datetime.now()
         self.timeStop = time.time()
 
+# Funkcja sprawdzajaca czy samolot oderwal sie od pasa startowego
+# Na podstawie sprawdzania czy osiagnal predkosc wymagana do oderwania od ziemi
     def ifTakeOFF(self):
         if self.speed > self.takeoffSpeed:
             if self.takeoff == False:
@@ -236,30 +248,38 @@ class AirPlane(QtGui.QWidget):
                 self.timeTakeOFF = time.time()
             self.takeoff = True
 
+# Aktualizacja predkosci
     def updateSpeed(self):
         if self.speed*3.6 < 900:
             self.speed = self.speed_p + self.acceleration*self.getTime()
 
+#Aktualizacja odleglosci
     def updateDistance(self):
         if self.takeoff == False:
             self.distanceRunway = (self.acceleration*self.getTime()*self.getTime())/2
         else:
             self.distance = self.speed*math.cos(math.radians(self.angle))*self.getTimeTakeoff()
 
-    def FlihtMode(self):
+# Zmiana kata przy wznoszeniu i wyrownywaniu
+    def FlightMode(self):
         if (self.height < 2000) & (self.angle < 40):
             self.angle += 0.1
             self.height += self.speed*math.sin(math.radians(self.angle))
         if (self.height > 2000) & (self.angle > 0):
-            self.angle += 0.3
+            self.angle -= 0.3
             self.height += self.speed*math.sin(math.radians(self.angle))
+        if(self.angle <= 0):
+            self.angle = 0
 
+# Zwraca czas w sekundach od poczatku lotu
     def getTime(self):
         return time.time() - self.timeStart + self.boost
 
+# Zwraca czas w sekundach od oderwania sie od ziemi
     def getTimeTakeoff(self):
         return time.time() - self.timeTakeOFF
 
+# Drukuje logi w konsoli
     def printLogs(self):
         print '-------------------'
         print 'Czas',self.getTime()
@@ -275,7 +295,6 @@ def main():
     app = QtGui.QApplication(sys.argv)
     ex = AirPlane()
     sys.exit(app.exec_())
-    ex.update()
 
 if __name__ == '__main__':
     main()
