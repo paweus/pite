@@ -33,7 +33,7 @@ class AirPlane(QtGui.QWidget):
         self.distanceRunway = 0
         self.dateNow = None
         super(AirPlane, self).__init__()
-
+ 
         self.initUI()
 
 #####################################################
