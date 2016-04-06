@@ -103,6 +103,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
     def UpdateStatsGUI(self,obj):
         self.stats = obj
         self.spinBox_max.setValue(obj.timeFlight)
+        self.spinBox_min.setValue(0)
         self.start_label_2.setText("<b>OK</b>")
         self.start_Button_2.setEnabled(False)
         self.plotHolder.addData(self.data)
@@ -419,7 +420,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
     #Dane tekstowe GUI
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Flight recorder symulator", None))
         self.loadData_button.setText(_translate("MainWindow", "Wczytaj dane", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Wykres", None))
         self.stats_dateStart.setText(_translate("MainWindow", "Data startu:", None))
