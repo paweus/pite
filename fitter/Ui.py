@@ -248,7 +248,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.rozklad_label.setText(_translate("MainWindow", "Rozklad punktow:", None))
         self.funkcja_label.setText(_translate("MainWindow", "Funkcja: sinus", None))
         self.amplituda_label.setText(_translate("MainWindow", "Amplituda:", None))
-        self.frekwencja_label.setText(_translate("MainWindow", "Frekwencja:", None))
+        self.frekwencja_label.setText(_translate("MainWindow", "Czestotliwosc:", None))
         self.przesuniecie_label.setText(_translate("MainWindow", "Przesuniecie:", None))
         self.checkBox_poczatkowa.setText(_translate("MainWindow", "Funkcja poczatkowa", None))
         self.checkBox_dopasowana.setText(_translate("MainWindow", "Funkcja dopasowana", None))
