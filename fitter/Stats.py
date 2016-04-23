@@ -8,5 +8,9 @@ class Stats:
     @staticmethod
     def chi(data1,data2):
          obs = np.array([data1,data2])
-         chi2, p, dof, expected = stats.chi2_contingency(obs)
+         try:
+             chi2, p, dof, expected = stats.chi2_contingency(obs)
+         except:
+            print 'Chi2 error'
+
          return chi2
