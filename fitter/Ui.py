@@ -23,6 +23,10 @@ except AttributeError:
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig)
 
+
+#Klasa odpowiedzialna za wyswietlanie UI
+#Znajdujaca sie w niej metody wykonujaca funkcje z innych klas oraz te odpowiedzialne za aktualizacje interfejsu
+#oraz wszystkie jego elementy
 class Ui_MainWindow(QtGui.QMainWindow):
     def __init__(self):
         plott = Plotter()
@@ -32,11 +36,13 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.fit = Fitter()
         self.gen = Generator()
         self.plot = Plotter()
-        self.popt = []
+        self.fitted_args = []
         self.chi2 = None
+        self.chi2Error = 0.5
 
+    #Funkcja odpowiedzialna za wywolanie funkcji tworzacej nowy wykres z klasy Plotter
+    #oraz wstawienie go w GUI
     def DrawPlot(self):
-        print 'Creating plot...'
         Plotter.dopasowana = self.checkBox_dopasowana.isChecked()
         Plotter.poczatkowa = self.checkBox_poczatkowa.isChecked()
         Plotter.dane = self.checkBox_dane.isChecked()
@@ -54,35 +60,50 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.newTab.setLayout(layout)
         print 'Plot created.'
 
+    #Funkcja uruchamiana po uzyciu przycisku generujacego wykres w GUI
+    #Odpowiedzialna za kolejne uruchomienie wszystkich funkcje z zaimportowanych klas
     def start(self):
-        print 'test'
-        print self.checkBox_poczatkowa.isChecked()
+        print 'Generating data...'
+        #przekazanie danych ze spinboxow (z interfejsu) do generatora danych
         self.gen.getData(self.spinbox_amp.value(),self.spinbox_freq.value(),self.spinbox_ilePkt.value(),self.spinbox_rozrzut.value(),self.spinbox_przesuniecie.value(),self.spinbox_zakresOd.value(),self.spinbox_zakresDo.value())
         # #uruchamianie kreatora
         self.gen.creator()
-        # #tworzenie fittera
+
+        #przekazywanie danych do fittera
         self.fit.getData(self.gen.returnX(),self.gen.returnYn())
-        # #fittowanie
+
         chio = None
         oneMoreGuess = 0
-        while ((chio == None) or (chio > 0.2)) and (oneMoreGuess < self.spinbox_freq.maximum()):
-            self.fit.fit(self.gen.guess(oneMoreGuess))
+        #iteracyjne poszukiwanie odpowiedniej czestotliwosci, dobierane na podstawie porownania z wartoscia chi2
+        print "Fitting..."
+        while ((chio == None) or (chio > self.chi2Error)) and (oneMoreGuess < self.spinbox_freq.maximum()):
+            #dopasowywanie funkcji
+            self.fit.fit(self.fit.guess(oneMoreGuess))
             chio = Stats.chi(self.gen.returnY(),self.fit.returnFittedData())
             oneMoreGuess += 0.1
         self.chi2 = chio
-        # #wydrukowanie zfitowanych wartosci
-        self.popt = self.fit.printPopt()
-        # #tworzenie plottera
+        if self.chi2 <= self.chi2Error:
+            print 'Fitting status: OK'
+        else:
+            print 'Fitting status: Failure'
+        #wydrukowanie zfitowanych wartosci
+        self.fitted_args = self.fit.printfitted_args()
+        #tworzenie plottera
+        print 'Drawing plot...'
         self.DrawPlot()
+        #aktualizacja GUI
         self.UpdateGui()
-        # #pobieranie danych do plottera
+        print 'All done.'
+        print '-----------------'
 
+    #Funkcja akutalizujaca informacje w gui
     def UpdateGui(self):
         self.chi_value.setText(str(round(self.chi2,6)))
-        self.amp_value.setText(str(round(self.popt[0],6)))
-        self.freq_value.setText(str(round(self.popt[1],6)))
-        self.przes_value.setText(str(round(self.popt[2],6)))
+        self.amp_value.setText(str(round(self.fitted_args[0],6)))
+        self.freq_value.setText(str(round(self.fitted_args[1],6)))
+        self.przes_value.setText(str(round(self.fitted_args[2],6)))
 
+    #Funkcja inicjalizujaca spinboxy
     def initSpinBox(self):
         self.spinbox_amp.setValue(1)
         self.spinbox_freq.setValue(1)
@@ -92,6 +113,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.spinbox_zakresDo.setValue(10)
         self.spinbox_przesuniecie.setValue(0)
 
+    #Funkcje odpowiedzialne za tworzenie GUI
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.setFixedSize(914, 523)
@@ -209,8 +231,6 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.spinbox_ilePkt.setMinimum(100)
         self.spinbox_przesuniecie.setMinimum(1)
         self.spinbox_przesuniecie.setMaximum(10)
-
-
 
         self.rysuj_button.clicked.connect(self.start)
         self.initSpinBox()
