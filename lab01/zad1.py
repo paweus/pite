@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Tablica globalna przechowywujaca rownania (w postaci tablic) 
+# Tablica globalna przechowywujaca rownania (w postaci tablic)
 equations = []
 
 

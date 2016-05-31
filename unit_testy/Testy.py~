@@ -1,0 +1,17 @@
+import unittest
+
+from Player import Player 
+
+class TestHangMan(unittest.TestCase):
+	def setUp(self):
+		self.testy = Player()
+		
+	def test_firsttest(self):
+	#	self.assertRaises(TypeError, self.testy.StartGame("w")
+		self.assertEquals(4,5)	
+	
+		
+
+if __name__ == '__main__':
+	unittest.main()
+
