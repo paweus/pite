@@ -1,4 +1,4 @@
-from Wisielec import Wisielec
+	from Wisielec import Wisielec
 
 
 class Player:

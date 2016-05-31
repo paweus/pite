@@ -11,14 +11,16 @@ class TestHangMan(unittest.TestCase):
 		self.testy = Player()
 		# self.testy2 = Player()
 
-
+	#Czy ilosc popelnionych bledow nie jest wieksza od maksymalnej ilosci bledow
 	def test_MaxErrors(self):
-		self.assertGreater(self.testy.errors,self.testy.maxerrors )
+		self.assertGreaterEqual(self.testy.maxerrors,self.testy.errors)
+
+	
 
 
 	# Uruchomienie gry z innym slowem
 	# Problematyczne do testowania
-	
+
 	# def test_Code(self):
 	# 	self.assertRaises(TypeError, self.testy2.StartGame("test"))
 
